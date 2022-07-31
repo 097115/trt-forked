@@ -18,8 +18,6 @@ jobs:
             artifact_suffix: macos-x86_64
             target_os: darwin
             target_arch: amd64
-            cflags: "-mmacosx-version-min=10.11"
-            ldflags: "-mmacosx-version-min=10.11"
           - build_target: linux32
             os: ubuntu-latest
             artifact_suffix: linux-x86_32
@@ -39,22 +37,17 @@ jobs:
         uses: actions/setup-go@v2
       - name: Set up Linux deps
         if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt update
+        run: sudo apt update
       - name: Set up Linux32 deps
         if: matrix.target_arch == '386'
-        run: |
-          sudo apt update
-          sudo apt-get install gcc-multilib
+        run: sudo apt update
       - name: Build
         run: GOOS=${{ matrix.target_os }} GOARCH=${{ matrix.target_arch }} make
       - name: Install
         run: make install
       - name: Package
         shell: bash
-        run: |
-          ls -la
-          tar czvf trt-${{ matrix.artifact_suffix }}.tar.gz ${{ matrix.artifact_suffix }}/
+        run: tar czvf trt-${{ matrix.artifact_suffix }}.tar.gz ${{ matrix.artifact_suffix }}/
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
