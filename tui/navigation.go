@@ -141,6 +141,59 @@ func (nav *Navigation) setKeys() {
 			}
 		}
 
+		// make sure <Down> and <Up> mimic j and k
+		switch event.Key() {
+		case 257:
+			switch currentWidget {
+			case "overview":
+				row, col := tui.overview.widget.GetScrollOffset()
+				tui.overview.widget.ScrollTo(row-1, col)
+				return nil
+
+			case "trackers":
+				row, col := tui.trackers.widget.GetScrollOffset()
+				tui.trackers.widget.ScrollTo(row-1, col)
+				return nil
+			}
+
+		case 258:
+			switch currentWidget {
+			case "overview":
+				row, col := tui.overview.widget.GetScrollOffset()
+				tui.overview.widget.ScrollTo(row+1, col)
+				return nil
+
+			case "trackers":
+				row, col := tui.trackers.widget.GetScrollOffset()
+				tui.trackers.widget.ScrollTo(row+1, col)
+				return nil
+
+			case "peers":
+				if tui.peers.widget.GetRowCount() > 0 {
+					tui.app.SetFocus(tui.peers.widget)
+					setSelectedCellStyle(tui.navigation.widget,
+						tcell.StyleDefault.Background(tcell.ColorBlack))
+
+					setSelectedCellStyle(tui.peers.widget,
+						tcell.StyleDefault.Background(tcell.ColorWhite).
+							Foreground(tcell.ColorBlack))
+
+					return nil
+				}
+
+			case "files":
+				tui.app.SetFocus(tui.files.widget)
+				setSelectedCellStyle(tui.navigation.widget,
+					tcell.StyleDefault.Background(tcell.ColorBlack))
+
+				setSelectedCellStyle(tui.files.widget,
+					tcell.StyleDefault.Background(tcell.ColorWhite).
+						Foreground(tcell.ColorBlack))
+
+				return nil
+			}
+		}
+
 		return event
 	})
 }

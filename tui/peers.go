@@ -100,6 +100,23 @@ func (p *Peers) setKeys() {
 			p.widget.ScrollToEnd()
 			return nil
 		}
+
+		// make sure <<Up> mimics k
+		switch event.Key() {
+		case 257:
+			row, _ := tui.peers.widget.GetSelection()
+			if row == 1 {
+				tui.app.SetFocus(tui.layout)
+				setSelectedCellStyle(tui.peers.widget,
+					tcell.StyleDefault.Background(tcell.ColorBlack))
+
+				setSelectedCellStyle(tui.navigation.widget,
+					tcell.StyleDefault.Background(tcell.ColorWhite).
+						Foreground(tcell.ColorBlack))
+				return nil
+			}
+		}
+
 		return event
 	})
 }

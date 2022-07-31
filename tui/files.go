@@ -201,6 +201,24 @@ func (f *Files) setKeys(session *core.Session) {
 			}
 			core.ChangeFilePriority(fileNums, f.torrentID, "high", true, session)
 		}
+
+		// make sure <<Up> mimics k
+		switch event.Key() {
+		case 257:
+			row, _ := tui.files.widget.GetSelection()
+			if row == 1 {
+				tui.app.SetFocus(tui.layout)
+				setSelectedCellStyle(tui.files.widget,
+					tcell.StyleDefault.Background(tcell.ColorBlack))
+
+				setSelectedCellStyle(tui.navigation.widget,
+					tcell.StyleDefault.
+						Background(tcell.ColorWhite).
+						Foreground(tcell.ColorBlack))
+				return nil
+			}
+		}
+
 		return event
 	})
 }
