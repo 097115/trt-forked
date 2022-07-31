@@ -37,8 +37,6 @@ jobs:
         uses: actions/checkout@v2
       - name: Set up Go
         uses: actions/setup-go@v2
-      - name: Set up macOS deps
-        if: matrix.os == 'macos-latest'
       - name: Set up Linux deps
         if: matrix.os == 'ubuntu-latest'
         run: |
