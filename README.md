@@ -1,4 +1,12 @@
 # Transmission Remote TUI (trt)
+
+
+## About
+
+This is a fork of [`trt`](https://github.com/murtaza-u/transmission-remote-tui) by [Murtaza Udaipurwala](https://github.com/murtaza-u/transmission-remote-tui) with some insignificant tweaks. All the credits go to the original author. The original README follows.
+
+<hr>
+
 > A TUI for BitTorrent client transmission
 
 
