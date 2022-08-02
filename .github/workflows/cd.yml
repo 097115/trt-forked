@@ -41,8 +41,9 @@ jobs:
       - name: Set up Linux32 deps
         if: matrix.target_arch == '386'
         run: sudo apt update
-      - name: Build
+      - name: Set up Go deps
         run: go get github.com/Murtaza-Udaipurwala/trt/core
+      - name: Build
         run: GOOS=${{ matrix.target_os }} GOARCH=${{ matrix.target_arch }} make
       - name: Install
         run: make install
