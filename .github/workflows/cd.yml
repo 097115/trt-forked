@@ -42,7 +42,6 @@ jobs:
         if: matrix.target_arch == '386'
         run: sudo apt update
       - name: Build
-        run: go get github.com/Murtaza-Udaipurwala/trt/core
         run: GOOS=${{ matrix.target_os }} GOARCH=${{ matrix.target_arch }} make
       - name: Install
         run: make install
