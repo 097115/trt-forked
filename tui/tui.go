@@ -2,142 +2,101 @@ package tui
 
 import (
 	"log"
-	"os"
 	"time"
 
+	"github.com/Murtaza-Udaipurwala/trt/core"
 	"github.com/gdamore/tcell/v2"
-	"github.com/murtaza-u/trt/core"
 	"github.com/rivo/tview"
-	"golang.org/x/term"
-)
-
-const (
-	TorrentPage = "torrent"
-	DetailsPage = "details"
 )
 
 type TUI struct {
-	app      *tview.Application
-	pages    *tview.Pages
-	torrent  *torrentWid
-	overview *overviewWid
-	nav      *navWid
-	layout   *layoutWid
-	files    *files
-	peers    *peers
-	trackers *trackers
-	force    chan struct{}
-	width    int
+	app        *tview.Application
+	pages      *tview.Pages
+	layout     *tview.Flex
+	torrents   *List
+	navigation *Navigation
+	overview   *Overview
+	files      *Files
+	trackers   *Trackers
+	peers      *Peers
+	id         int
 }
 
 var tui *TUI
 
-func InitTUI(s *core.Session) (*TUI, error) {
-	tui = &TUI{
-		app:      tview.NewApplication(),
-		pages:    tview.NewPages(),
-		torrent:  initTorrentWid(s),
-		overview: initOverviewWid(s),
-		nav:      initNav(s),
-		layout:   initLayout(),
-		files:    initFiles(s),
-		peers:    initPeers(),
-		trackers: initTrackers(),
-		force:    make(chan struct{}, 1000),
+func initTUI(session *core.Session) *TUI {
+	return &TUI{
+		app:        tview.NewApplication(),
+		pages:      tview.NewPages(),
+		torrents:   initTorrents(),
+		layout:     tview.NewFlex().SetDirection(tview.FlexRow),
+		navigation: initNavigation(session),
+		overview:   initOverview(),
+		files:      initFiles(),
+		peers:      initPeers(),
+		trackers:   initTrackers(),
+		id:         -1,
 	}
-
-	err := tui.setWidth()
-	if err != nil {
-		return nil, err
-	}
-
-	tui.pages.AddPage(TorrentPage, tui.torrent.widget, true, true)
-	tui.pages.AddPage(DetailsPage, tui.layout.widget, true, false)
-
-	tui.layout.widget.AddItem(tui.nav.widget, 1, 1, true)
-	tui.layout.widget.AddItem(tui.overview.widget, 0, 1, false)
-
-	tui.nav.curr = tui.overview.widget
-
-	tui.files.style()
-	tui.peers.style()
-
-	tui.setKeys(s)
-	return tui, nil
 }
 
-func (t *TUI) setKeys(s *core.Session) {
-	tui.app.SetInputCapture(func(e *tcell.EventKey) *tcell.EventKey {
-		switch e.Rune() {
+var currentWidget string
+
+func redraw(session *core.Session) {
+	switch currentWidget {
+	case "torrents":
+		tui.torrents.update(session)
+	case "overview":
+		tui.overview.update(session)
+	case "files":
+		tui.files.update(session)
+	case "peers":
+		tui.peers.update(session)
+	case "trackers":
+		tui.trackers.update(session)
+	}
+}
+
+func setKeys(session *core.Session) {
+	tui.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Rune() {
 		case 'Q':
-			err := s.Close()
-			if err != nil {
-				log.Fatal(err)
-			}
+			core.SendRequest("session-close", "1", core.Arguments{}, session)
 			tui.app.Stop()
 			return nil
 		}
 
-		return e
+		return event
 	})
+
+	tui.torrents.setKeys(session)
+	tui.navigation.setKeys()
+	tui.peers.setKeys()
+	tui.files.setKeys(session)
 }
 
-func (t *TUI) redraw(s *core.Session) error {
-	p, _ := t.pages.GetFrontPage()
-	var err error
+func Run(session *core.Session) {
+	currentWidget = "torrents"
+	tui = initTUI(session)
+	tui.pages.AddPage("torrents", tui.torrents.widget, true, true)
 
-	switch p {
-	case TorrentPage:
-		err = t.torrent.redraw(s)
-	case DetailsPage:
-		err = t.layout.redraw(s)
-	}
+	tui.navigation.setHeaders()
 
-	if err != nil {
-		return err
-	}
+	tui.layout.AddItem(tui.navigation.widget, 1, 1, true)
+	tui.layout.AddItem(tui.overview.widget, 0, 1, false)
 
-	t.app.Draw()
-	return nil
-}
+	tui.torrents.setHeaders()
 
-func (t *TUI) drainForce() {
-	select {
-	case <-t.force:
-		t.drainForce()
-	default:
-		return
-	}
-}
-
-func (t *TUI) setWidth() error {
-	// on non-Unix systems fd may not be 0
-	fd := int(os.Stdin.Fd())
-	w, _, err := term.GetSize(fd)
-	if err != nil {
-		return err
-	}
-
-	t.width = w
-	return nil
-}
-
-func (t *TUI) Run(s *core.Session) error {
 	go func() {
 		for {
-			t.drainForce()
-			err := t.redraw(s)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			select {
-			case <-tui.force:
-			case <-time.After(time.Second):
-			}
+			redraw(session)
+			tui.app.Draw()
+			time.Sleep(time.Second)
 		}
 	}()
 
-	err := t.app.SetRoot(t.pages, true).SetFocus(t.pages).Run()
-	return err
+	setKeys(session)
+
+	if err := tui.app.SetRoot(tui.pages, true).SetFocus(tui.pages).Run(); err != nil {
+		log.Panic(err)
+	}
 }

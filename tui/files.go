@@ -1,101 +1,124 @@
 package tui
 
 import (
-	"log"
-	"path/filepath"
+	"strings"
 
+	"github.com/Murtaza-Udaipurwala/trt/core"
 	"github.com/gdamore/tcell/v2"
-	"github.com/murtaza-u/trt/core"
 	"github.com/rivo/tview"
 )
 
-type files struct {
-	widget   *tview.Table
-	fields   []string
-	priority map[int]string
+type Files struct {
+	widget    *tview.Table
+	num       int
+	torrentID int
 }
 
-const (
-	FileOffPriority    = "off"
-	FileLowPriority    = "low"
-	FileNormalPriority = "normal"
-	FileHighPriority   = "high"
-)
+func initFiles() *Files {
+	return &Files{
+		widget: tview.NewTable().
+			SetSelectable(true, false).SetFixed(1, 1).
+			SetSelectedStyle(tcell.StyleDefault.Background(tcell.ColorBlack)).
+			SetSelectionChangedFunc(func(row, column int) {
+				tui.files.num = row - 1
+			}),
+	}
+}
 
-func initFiles(s *core.Session) *files {
-	f := new(files)
-	f.widget = tview.NewTable().SetSelectable(true, false).SetFixed(1, 1)
+func (f *Files) setHeaders() {
+	var headers []string = []string{"Total Size", "Downloaded", "Priority", "Name"}
+	for col, header := range headers {
+		f.widget.SetCell(0, col, tview.NewTableCell(header).
+			SetSelectable(false).
+			SetExpansion(1).
+			SetTextColor(tcell.ColorYellow))
+	}
+}
 
-	f.fields = []string{"id", "files", "wanted", "priorities", "name"}
+var filesFields []string = []string{"id", "files", "wanted", "priorities", "name"}
 
-	f.priority = make(map[int]string, 3)
-	f.priority[-1] = FileLowPriority
-	f.priority[0] = FileNormalPriority
-	f.priority[1] = FileHighPriority
+func (f *Files) update(session *core.Session) {
+	torrent, err := core.GetTorrentByID(session, tui.id, filesFields)
+	if err != nil {
+		currentWidget = "torrents"
+		redraw(session)
+		tui.pages.RemovePage("details")
+	}
+
+	files := torrent.Files
+	if len(files) == 0 {
+		return
+	}
 
 	f.setHeaders()
-	f.setKeys(s)
-	return f
-}
+	f.torrentID = torrent.ID
+	priorities := torrent.Priorities
+	wanted := torrent.Wanted
 
-func (f *files) style() {
-	f.widget.SetSelectedStyle(tcell.StyleDefault.Background(tcell.ColorBlack))
-}
+	for row, file := range files {
+		size := parseBytes(float64(file.Length))
+		downloaded := parseBytes(float64(file.BytesCompleted))
 
-func (f *files) setHeaders() {
-	var headers = []string{"Total Size", "Downloaded", "Priority", "Name"}
-	for col, h := range headers {
-		f.widget.SetCell(
-			0, col, tview.NewTableCell(h).SetSelectable(false).SetExpansion(1),
-		)
-	}
-}
+		splits := strings.Split(file.Name, "/")
+		if splits[0] == torrent.Name && len(files) != 1 {
+			splits = append(splits[:0], splits[0+1:]...)
+		}
+		name := strings.Join(splits, "/")
 
-func (f *files) redraw(s *core.Session) error {
-	id := tui.torrent.currID()
-	t, err := s.GetTorrentByID(id, f.fields)
-	if err != nil {
-		return err
-	}
-
-	for i, fi := range t.Files {
-		attrs := make([]string, 0, 4)
-		attrs = append(attrs, byteCountSI(fi.Length))
-		attrs = append(attrs, byteCountSI(fi.BytesCompleted))
-
-		p := f.priority[t.Priorities[i]]
-		if t.Wanted[i] == 0 {
-			p = FileOffPriority
+		var priority string
+		var textColor tcell.Color
+		switch priorities[row] {
+		case -1:
+			priority = "low"
+			textColor = tcell.ColorGreen
+		case 0:
+			priority = "normal"
+			textColor = tcell.ColorWhite
+		case 1:
+			priority = "high"
+			textColor = tcell.ColorRed
 		}
 
-		attrs = append(attrs, p)
-		attrs = append(attrs, filepath.Base(fi.Name))
-
-		for col := 0; col <= 3; col++ {
-			f.widget.SetCell(i+1, col, tview.NewTableCell(attrs[col]))
+		if wanted[row] == 0 {
+			priority = "off"
+			textColor = tcell.ColorBlue
 		}
-	}
 
-	for i := len(t.Files) + 1; i < f.widget.GetRowCount(); i++ {
-		f.widget.RemoveRow(i)
+		f.widget.SetCell(row+1, 0, tview.NewTableCell(size))
+		f.widget.SetCell(row+1, 1, tview.NewTableCell(downloaded))
+		f.widget.SetCell(row+1, 2, tview.NewTableCell(priority).SetTextColor(textColor))
+		f.widget.SetCell(row+1, 3, tview.NewTableCell(name))
 	}
-
-	return err
 }
 
-func (f *files) setKeys(s *core.Session) {
-	f.widget.SetInputCapture(func(e *tcell.EventKey) *tcell.EventKey {
-		switch e.Rune() {
-		case 'q':
-			tui.layout.focus(f.widget)
-			return nil
-
+func (f *Files) setKeys(session *core.Session) {
+	tui.files.widget.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Rune() {
 		case 'k':
-			r, _ := f.widget.GetSelection()
-			if r == 1 {
-				tui.layout.focus(f.widget)
+			row, _ := tui.files.widget.GetSelection()
+			if row == 1 {
+				tui.app.SetFocus(tui.layout)
+				setSelectedCellStyle(tui.files.widget,
+					tcell.StyleDefault.Background(tcell.ColorBlack))
+
+				setSelectedCellStyle(tui.navigation.widget,
+					tcell.StyleDefault.
+						Background(tcell.ColorWhite).
+						Foreground(tcell.ColorBlack))
 				return nil
 			}
+
+		case 'q':
+			tui.app.SetFocus(tui.layout)
+			setSelectedCellStyle(tui.files.widget,
+				tcell.StyleDefault.
+					Background(tcell.ColorBlack))
+
+			setSelectedCellStyle(tui.navigation.widget,
+				tcell.StyleDefault.
+					Background(tcell.ColorWhite).
+					Foreground(tcell.ColorBlack))
+			return nil
 
 		case 'g':
 			f.widget.Select(1, 0)
@@ -107,45 +130,76 @@ func (f *files) setKeys(s *core.Session) {
 			f.widget.ScrollToEnd()
 			return nil
 
-		case 'i':
-			f.stepPri(s, 1)
+		case 'd':
+			currentPriority := f.widget.GetCell(f.num+1, 2).Text
+			switch currentPriority {
+			case "low":
+				core.ChangeFilePriority([]int{f.num}, f.torrentID, "low", false, session)
+				f.update(session)
+			case "normal":
+				core.ChangeFilePriority([]int{f.num}, f.torrentID, "low", true, session)
+				f.update(session)
+			case "high":
+				core.ChangeFilePriority([]int{f.num}, f.torrentID, "normal", true, session)
+				f.update(session)
+			}
 			return nil
 
-		case 'd':
-			f.stepPri(s, -1)
+		case 'i':
+			currentPriority := f.widget.GetCell(f.num+1, 2).Text
+			switch currentPriority {
+			case "off":
+				core.ChangeFilePriority([]int{f.num}, f.torrentID, "low", true, session)
+				f.update(session)
+			case "low":
+				core.ChangeFilePriority([]int{f.num}, f.torrentID, "normal", true, session)
+				f.update(session)
+			case "normal":
+				core.ChangeFilePriority([]int{f.num}, f.torrentID, "high", true, session)
+				f.update(session)
+			}
 			return nil
 
 		case 'o':
-			f.setPri(s, FileOffPriority, true)
-			return nil
-
+			core.ChangeFilePriority([]int{f.num}, f.torrentID, "low", false, session)
+			f.update(session)
 		case 'l':
-			f.setPri(s, FileLowPriority, true)
-			return nil
-
+			core.ChangeFilePriority([]int{f.num}, f.torrentID, "low", true, session)
+			f.update(session)
 		case 'n':
-			f.setPri(s, FileNormalPriority, true)
-			return nil
-
+			core.ChangeFilePriority([]int{f.num}, f.torrentID, "normal", true, session)
+			f.update(session)
 		case 'h':
-			f.setPri(s, FileHighPriority, true)
-			return nil
+			core.ChangeFilePriority([]int{f.num}, f.torrentID, "high", true, session)
+			f.update(session)
 
 		case 'O':
-			f.setPri(s, FileOffPriority, false)
-			return nil
-
+			var fileNums []int
+			for num := 0; num < f.widget.GetRowCount()-1; num++ {
+				fileNums = append(fileNums, num)
+			}
+			core.ChangeFilePriority(fileNums, f.torrentID, "low", false, session)
+			f.update(session)
 		case 'L':
-			f.setPri(s, FileLowPriority, false)
-			return nil
-
+			var fileNums []int
+			for num := 0; num < f.widget.GetRowCount()-1; num++ {
+				fileNums = append(fileNums, num)
+			}
+			core.ChangeFilePriority(fileNums, f.torrentID, "low", true, session)
+			f.update(session)
 		case 'N':
-			f.setPri(s, FileNormalPriority, false)
-			return nil
-
+			var fileNums []int
+			for num := 0; num < f.widget.GetRowCount()-1; num++ {
+				fileNums = append(fileNums, num)
+			}
+			core.ChangeFilePriority(fileNums, f.torrentID, "normal", true, session)
+			f.update(session)
 		case 'H':
-			f.setPri(s, FileHighPriority, false)
-			return nil
+			var fileNums []int
+			for num := 0; num < f.widget.GetRowCount()-1; num++ {
+				fileNums = append(fileNums, num)
+			}
+			core.ChangeFilePriority(fileNums, f.torrentID, "high", true, session)
 		}
 
 		// make sure <<Up> mimics k
@@ -165,75 +219,6 @@ func (f *files) setKeys(s *core.Session) {
 			}
 		}
 
-		return e
+		return event
 	})
-}
-
-func (f *files) stepPri(s *core.Session, dir int) {
-	id := tui.torrent.currID()
-	r, _ := f.widget.GetSelection()
-	fn := []int{r - 1}
-
-	curr := f.widget.GetCell(r, 2).Text
-	var err error
-
-	switch curr {
-	case FileOffPriority:
-		if dir < 0 {
-			return
-		}
-		err = s.FilePriority(id, fn, FileLowPriority, true)
-
-	case FileLowPriority:
-		if dir < 0 {
-			err = s.FilePriority(id, fn, FileLowPriority, false)
-			break
-		}
-		err = s.FilePriority(id, fn, FileNormalPriority, true)
-
-	case FileNormalPriority:
-		if dir < 0 {
-			err = s.FilePriority(id, fn, FileLowPriority, true)
-			break
-		}
-		err = s.FilePriority(id, fn, FileHighPriority, true)
-
-	case FileHighPriority:
-		if dir > 0 {
-			return
-		}
-		err = s.FilePriority(id, fn, FileNormalPriority, true)
-	}
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	tui.force <- struct{}{}
-}
-
-func (f *files) setPri(s *core.Session, pri string, one bool) {
-	id := tui.torrent.currID()
-	fn := make([]int, 0, 1)
-
-	if one {
-		r, _ := f.widget.GetSelection()
-		fn = append(fn, r-1)
-	} else {
-		for i := 0; i <= f.widget.GetRowCount()-2; i++ {
-			fn = append(fn, i)
-		}
-	}
-
-	var want bool
-	if pri != FileOffPriority {
-		want = true
-	}
-
-	err := s.FilePriority(id, fn, pri, want)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	tui.force <- struct{}{}
 }

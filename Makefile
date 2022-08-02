@@ -4,7 +4,7 @@ BINDIR ?= $(PREFIX)/bin
 all: trt
 
 trt:
-	CGO_ENABLED=1 go build
+	go build
 
 install: all
 	install -d $(DESTDIR)$(BINDIR)
