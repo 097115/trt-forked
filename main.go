@@ -9,8 +9,15 @@ import (
 	"github.com/Murtaza-Udaipurwala/trt/tui"
 )
 
+const AppVersion = "0.0.3"
+
 func main() {
-	username, password, url, port := cli.ParseArgs()
+	version, username, password, url, port := cli.ParseArgs()
+
+	if version {
+		fmt.Println("TRT v." + AppVersion)
+		return
+	}
 
 	if !strings.HasPrefix(url, "http") {
 		url = "http://" + url
