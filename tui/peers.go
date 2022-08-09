@@ -15,7 +15,7 @@ type Peers struct {
 func initPeers() *Peers {
 	return &Peers{
 		widget: tview.NewTable().SetSelectable(true, false).SetFixed(1, 1).
-			SetSelectedStyle(tcell.StyleDefault.Background(tcell.ColorBlack)),
+			SetSelectedStyle(tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorWhite)),
 	}
 }
 
@@ -72,7 +72,7 @@ func (p *Peers) setKeys() {
 			if row == 1 {
 				tui.app.SetFocus(tui.layout)
 				setSelectedCellStyle(tui.peers.widget,
-					tcell.StyleDefault.Background(tcell.ColorBlack))
+					tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorWhite))
 
 				setSelectedCellStyle(tui.navigation.widget,
 					tcell.StyleDefault.Background(tcell.ColorWhite).
@@ -108,7 +108,7 @@ func (p *Peers) setKeys() {
 			if row == 1 {
 				tui.app.SetFocus(tui.layout)
 				setSelectedCellStyle(tui.peers.widget,
-					tcell.StyleDefault.Background(tcell.ColorBlack))
+					tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorWhite))
 
 				setSelectedCellStyle(tui.navigation.widget,
 					tcell.StyleDefault.Background(tcell.ColorWhite).

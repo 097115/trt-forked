@@ -18,7 +18,7 @@ func initFiles() *Files {
 	return &Files{
 		widget: tview.NewTable().
 			SetSelectable(true, false).SetFixed(1, 1).
-			SetSelectedStyle(tcell.StyleDefault.Background(tcell.ColorBlack)).
+			SetSelectedStyle(tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorWhite)).
 			SetSelectionChangedFunc(func(row, column int) {
 				tui.files.num = row - 1
 			}),
@@ -99,7 +99,7 @@ func (f *Files) setKeys(session *core.Session) {
 			if row == 1 {
 				tui.app.SetFocus(tui.layout)
 				setSelectedCellStyle(tui.files.widget,
-					tcell.StyleDefault.Background(tcell.ColorBlack))
+					tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorWhite))
 
 				setSelectedCellStyle(tui.navigation.widget,
 					tcell.StyleDefault.
@@ -209,7 +209,7 @@ func (f *Files) setKeys(session *core.Session) {
 			if row == 1 {
 				tui.app.SetFocus(tui.layout)
 				setSelectedCellStyle(tui.files.widget,
-					tcell.StyleDefault.Background(tcell.ColorBlack))
+					tcell.StyleDefault.Background(tcell.ColorBlack).Foreground(tcell.ColorWhite))
 
 				setSelectedCellStyle(tui.navigation.widget,
 					tcell.StyleDefault.
