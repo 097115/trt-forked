@@ -16,6 +16,8 @@ func (nav *Navigation) setHeaders() {
 	var headers []string = []string{"Overview", "Files", "Trackers", "Peers"}
 	for col, header := range headers {
 		nav.widget.SetCell(0, col, tview.NewTableCell(header).
+			SetBackgroundColor(tcell.ColorNavy).
+			SetTextColor(tcell.ColorWhite).
 			SetExpansion(1).
 			SetAlign(tview.AlignCenter))
 	}
@@ -84,7 +86,8 @@ func (nav *Navigation) setKeys() {
 				if tui.peers.widget.GetRowCount() > 0 {
 					tui.app.SetFocus(tui.peers.widget)
 					setSelectedCellStyle(tui.navigation.widget,
-						tcell.StyleDefault.Background(tcell.ColorBlack))
+						tcell.StyleDefault.Background(tcell.ColorLightGray).
+							Foreground(tcell.ColorBlack))
 
 					setSelectedCellStyle(tui.peers.widget,
 						tcell.StyleDefault.Background(tcell.ColorWhite).
@@ -96,7 +99,8 @@ func (nav *Navigation) setKeys() {
 			case "files":
 				tui.app.SetFocus(tui.files.widget)
 				setSelectedCellStyle(tui.navigation.widget,
-					tcell.StyleDefault.Background(tcell.ColorBlack))
+					tcell.StyleDefault.Background(tcell.ColorLightGray).
+						Foreground(tcell.ColorBlack))
 
 				setSelectedCellStyle(tui.files.widget,
 					tcell.StyleDefault.Background(tcell.ColorWhite).
@@ -172,7 +176,8 @@ func (nav *Navigation) setKeys() {
 				if tui.peers.widget.GetRowCount() > 0 {
 					tui.app.SetFocus(tui.peers.widget)
 					setSelectedCellStyle(tui.navigation.widget,
-						tcell.StyleDefault.Background(tcell.ColorBlack))
+						tcell.StyleDefault.Background(tcell.ColorLightGray).
+							Foreground(tcell.ColorBlack))
 
 					setSelectedCellStyle(tui.peers.widget,
 						tcell.StyleDefault.Background(tcell.ColorWhite).
@@ -184,7 +189,8 @@ func (nav *Navigation) setKeys() {
 			case "files":
 				tui.app.SetFocus(tui.files.widget)
 				setSelectedCellStyle(tui.navigation.widget,
-					tcell.StyleDefault.Background(tcell.ColorBlack))
+					tcell.StyleDefault.Background(tcell.ColorLightGray).
+						Foreground(tcell.ColorBlack))
 
 				setSelectedCellStyle(tui.files.widget,
 					tcell.StyleDefault.Background(tcell.ColorWhite).
