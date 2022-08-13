@@ -70,18 +70,18 @@ func (f *Files) update(session *core.Session) {
 		switch priorities[row] {
 		case -1:
 			priority = "low"
-			textColor = tcell.ColorGreen
+			textColor = tcell.ColorWhite
 		case 0:
 			priority = "normal"
 			textColor = tcell.ColorWhite
 		case 1:
 			priority = "high"
-			textColor = tcell.ColorRed
+			textColor = tcell.ColorWhite
 		}
 
 		if wanted[row] == 0 {
 			priority = "off"
-			textColor = tcell.ColorBlue
+			textColor = tcell.ColorWhite
 		}
 
 		f.widget.SetCell(row+1, 0, tview.NewTableCell(size))
@@ -112,7 +112,7 @@ func (f *Files) setKeys(session *core.Session) {
 			tui.app.SetFocus(tui.layout)
 			setSelectedCellStyle(tui.files.widget,
 				tcell.StyleDefault.
-					Background(tcell.ColorBlack))
+					Background(tcell.ColorBlack).Foreground(tcell.ColorWhite))
 
 			setSelectedCellStyle(tui.navigation.widget,
 				tcell.StyleDefault.

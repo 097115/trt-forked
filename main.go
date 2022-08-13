@@ -9,7 +9,7 @@ import (
 	"github.com/Murtaza-Udaipurwala/trt/tui"
 )
 
-const AppVersion = "0.0.3"
+const AppVersion = "0.0.4"
 
 func main() {
 	version, username, password, url, port := cli.ParseArgs()
