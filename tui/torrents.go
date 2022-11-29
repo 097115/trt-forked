@@ -81,7 +81,7 @@ func (torrents *List) update(session *core.Session) {
 
 func (torrents *List) setHeaders() {
 	var headers []string = []string{
-		"Status", "ETA", "Upload Rate", "Download Rate", "Ratio", "Peers",
+		"Status", "ETA", "Upload Rate   ", "Download Rate", "Ratio", "Peers",
 		"Seeders", "Leechers", "Size", "Left", "Name",
 	}
 
