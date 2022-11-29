@@ -47,7 +47,7 @@ func (torrents *List) update(session *core.Session) {
 
 	for row, torrent := range torrents.torrents {
 		status := fmt.Sprintf("%-14s", core.TorrentStatus[torrent.Status])
-		eta := fmt.Sprintf("%-10s", parseTime(float64(torrent.ETA)))
+		eta := fmt.Sprintf("%-12s", parseTime(float64(torrent.ETA)))
 		uploadRate := fmt.Sprintf("%s/s", parseBytes(float64(torrent.RateUpload)))
 		downloadRate := fmt.Sprintf("%s/s", parseBytes(float64(torrent.RateDownload)))
 		seeders, leechers := core.GetSeedersLeechers(torrent.TrackerStats)
