@@ -46,13 +46,13 @@ func (torrents *List) update(session *core.Session) {
 	torrents.torrents = core.SortTorrentsByQueuePosition(core.GetTorrents(session, torrentFields))
 
 	for row, torrent := range torrents.torrents {
-		status := core.TorrentStatus[torrent.Status]
-		eta := fmt.Sprintf("%10s", parseTime(float64(torrent.ETA)))
+		status := fmt.Sprintf("%-14s", core.TorrentStatus[torrent.Status])
+		eta := fmt.Sprintf("%-10s", parseTime(float64(torrent.ETA)))
 		uploadRate := fmt.Sprintf("%s/s", parseBytes(float64(torrent.RateUpload)))
 		downloadRate := fmt.Sprintf("%s/s", parseBytes(float64(torrent.RateDownload)))
 		seeders, leechers := core.GetSeedersLeechers(torrent.TrackerStats)
-		size := parseBytes(float64(torrent.TotalSize))
-		left := parseBytes(float64(torrent.LeftUntilDone))
+		size := fmt.Sprintf("%-12s", parseBytes(float64(torrent.TotalSize)))
+		left := fmt.Sprintf("%-12s", parseBytes(float64(torrent.LeftUntilDone)))
 		name := torrent.Name
 
 		var ratio string
